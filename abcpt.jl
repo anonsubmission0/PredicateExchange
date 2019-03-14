@@ -1,6 +1,6 @@
 # Predicate Exchange vs Likelihood-Free Parallel Tempering #
 
-using PreicateExchange
+using PredicateExchange
 using Plots
 using Distributions: pdf, Normal
 
@@ -39,4 +39,6 @@ fs_abcpt = [x -> fk(x; k = r -> kϵ(r, ϵ)) for ϵ in epsilons]
 
 plot_abcpt = plot(fs_abcpt, title = "Likelihood Free Parallel Tempering", labels = epsilons)
 
-plot(plot_pe, plot_abcpt)
+plot_both = plot(plot_pe, plot_abcpt)
+
+savefig(plot_both, "abcpt.png")
