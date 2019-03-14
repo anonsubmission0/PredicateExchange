@@ -1,0 +1,13 @@
+name = "InvRayTrace"
+uuid = "8a45d79e-a589-11e8-1025-51d29e337d7e"
+authors = ["Zenna Tavares <zennatavares@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+Callbacks = "5c501fca-fc9b-11e8-1fb9-dbe118bb7e64"
+FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
+Omega = "f05e9b56-6544-11e8-2dc8-1fe18f3ca5da"
+OmegaModels = "5c58d492-a199-11e8-2252-e3ed96de436a"
+RayTrace = "9441d024-97fe-11e8-2154-4d1b79854d30"
+Spec = "526a04b8-654b-11e8-1588-db2a414f95b5"
+Tensorboard = "0b0dfcba-97db-11e8-112a-b5f40c7258d9"
