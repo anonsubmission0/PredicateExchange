@@ -1,6 +1,6 @@
 name = "InvRayTrace"
 uuid = "8a45d79e-a589-11e8-1025-51d29e337d7e"
-authors = ["Zenna Tavares <zennatavares@gmail.com>"]
+authors = ["Anon <AnonfAnonl@gmail.com>"]
 version = "0.1.0"
 
 [deps]

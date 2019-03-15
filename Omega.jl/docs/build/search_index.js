@@ -13,7 +13,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Home",
     "title": "Omega.jl",
     "category": "section",
-    "text": "Omega.jl is a programming language for causal and probabilistic reasoning. It was developed by Zenna Tavares with help from Javier Burroni, Edgar Minasyan, Xin Zhang, Rajesh Ranganath and Armando Solar Lezama."
+    "text": "Omega.jl is a programming language for causal and probabilistic reasoning. It was developed by Anon with help from Javier Burroni, Edgar Minasyan, Xin Zhang, Rajesh Ranganath and Armando Solar Lezama."
 },
 
 {
@@ -29,7 +29,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Home",
     "title": "Contribute",
     "category": "section",
-    "text": "We want your contributions!Probabilistic modelsPlease add probabilistic models and model families to https://github.com/zenna/OmegaModels.jlInference procedures"
+    "text": "We want your contributions!Probabilistic modelsPlease add probabilistic models and model families to https://github.com/Anonf/OmegaModels.jlInference procedures"
 },
 
 {

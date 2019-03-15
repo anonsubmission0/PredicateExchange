@@ -59,7 +59,7 @@ version = "0.2.2"
 deps = ["ProgressMeter"]
 git-tree-sha1 = "786f61341e29ad9e24e04054d82405c30457fbf1"
 repo-rev = "master"
-repo-url = "https://github.com/zenna/Callbacks.jl"
+repo-url = "https://github.com/Anonf/Callbacks.jl"
 uuid = "5c501fca-fc9b-11e8-1fb9-dbe118bb7e64"
 version = "0.1.0"
 
@@ -253,7 +253,7 @@ version = "0.3.2"
 deps = ["Callbacks", "Cassette", "Distributions", "DocStringExtensions", "DynamicHMC", "Flux", "ForwardDiff", "LogDensityProblems", "NLopt", "ProgressMeter", "Random", "Spec", "Statistics", "TransformVariables", "UnicodePlots"]
 git-tree-sha1 = "9542289792588f5cbfa288ec763ab1e31a635584"
 repo-rev = "master"
-repo-url = "https://github.com/zenna/Omega.jl.git"
+repo-url = "https://github.com/Anonf/Omega.jl.git"
 uuid = "f05e9b56-6544-11e8-2dc8-1fe18f3ca5da"
 version = "0.1.0"
 
@@ -352,7 +352,7 @@ uuid = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 deps = ["Cassette", "Pkg", "Random"]
 git-tree-sha1 = "83b79af58ae5930a49789200d355cc503e398b5a"
 repo-rev = "master"
-repo-url = "https://github.com/zenna/Spec.jl.git"
+repo-url = "https://github.com/Anonf/Spec.jl.git"
 uuid = "526a04b8-654b-11e8-1588-db2a414f95b5"
 version = "0.1.3"
 

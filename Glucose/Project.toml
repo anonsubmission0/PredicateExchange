@@ -1,6 +1,6 @@
 name = "Glucose"
 uuid = "5f6eff7a-4636-11e9-25db-a122d1b4f82c"
-authors = ["Zenna Tavares <zennatavares@gmail.com>"]
+authors = ["Anon <AnonfAnonl@gmail.com>"]
 version = "0.1.0"
 
 [deps]

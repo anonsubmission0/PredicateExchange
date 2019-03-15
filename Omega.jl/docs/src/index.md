@@ -1,7 +1,7 @@
 # Omega.jl
 
 Omega.jl is a programming language for causal and probabilistic reasoning.
-It was developed by [Zenna Tavares](http://zenna.org) with help from Javier Burroni, Edgar Minasyan, [Xin Zhang](http://people.csail.mit.edu/xzhang/), [Rajesh Ranganath](https://cims.nyu.edu/~rajeshr/) and [Armando Solar Lezama](https://people.csail.mit.edu/asolar/).
+It was developed by [Anon](http://Anonf.org) with help from Javier Burroni, Edgar Minasyan, [Xin Zhang](http://people.csail.mit.edu/xzhang/), [Rajesh Ranganath](https://cims.nyu.edu/~rajeshr/) and [Armando Solar Lezama](https://people.csail.mit.edu/asolar/).
 
 ## Quick Start
 
@@ -27,7 +27,7 @@ With that, see the [Tutorial](basictutorial.md) for a run through of the main fe
 We want your contributions!
 
 - Probabilistic models
-Please add probabilistic models and model families to https://github.com/zenna/OmegaModels.jl
+Please add probabilistic models and model families to https://github.com/Anonf/OmegaModels.jl
 
 - Inference procedures
 

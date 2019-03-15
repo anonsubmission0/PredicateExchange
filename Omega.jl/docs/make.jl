@@ -3,7 +3,7 @@ using Omega
 
 makedocs(
   modules = [Omega],
-  authors = "Zenna Tavares, Javier Burroni, Edgar Minaysan, Rajesh Ragananth, Armando Solar-Lezama",
+  authors = "Anon, Javier Burroni, Edgar Minaysan, Rajesh Ragananth, Armando Solar-Lezama",
   format = :html,
   sitename = "Omega.jl",
   pages = [
@@ -27,7 +27,7 @@ makedocs(
 )
 
 deploydocs(
-  repo = "github.com/zenna/Omega.jl.git",
+  repo = "github.com/Anonf/Omega.jl.git",
   julia="0.7",
   deps=nothing,
   make=nothing,
