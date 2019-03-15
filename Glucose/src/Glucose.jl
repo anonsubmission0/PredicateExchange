@@ -4,63 +4,96 @@ using Flux
 using DataFrames
 using CSV
 using Plots
+using LinearAlgebra: normalize
 
-DATADIR = joinpath(dirname(pathof(Glucose)), "..", "data")
+# TODO: Show a plot of prediction error
+# TODO: 
+# Feel a bit uneasy about htis, why? 
+# data is very small
+# Shouldn't we be sharing weights
+# Data isn't equally spaced
+# Just not a very good model
 
-Omega.defΩ() = SimpleΩ{Vector{Int}, Array}
+# Path to Glucose data
+GLUCOSEDIR = joinpath(dirname(pathof(Glucose)), "..")
+DATADIR = joinpath(GLUCOSEDIR, "data")
+FIGURESDIR = joinpath(GLUCOSEDIR, "figures")
 
-# δ = 0.1
-d(x, y) = (x - y)^2.0
-Omega.lift(:d, 2)
+include("plots.jl")
 
-"Recurrent Neural Network"
+dist(x, y) = (x - y)^2.0
+
+# The model
+
+"Simulates `nsteps` of RNN, returns output at each step"
 function rnn_(ω, f, nsteps, h1_size) 
-  h = zeros(h1_size) # What should this be?
+  # h = zeros(h1_size) # What should this be?
   xs = []
-  input = vcat(0, h)
+  input = zeros(h1_size + 1)
   for i = 1:nsteps
     input = f(input)
-    x = input[1]
+    x = input[1] # Takes single element of hidden layer
     push!(xs, x)
   end
   [xs...]
 end
 
-"RNN model, Bayesian RNN with two inner layers of size `h1_size`, `h2_size`"
-function model(nsteps, h1_size=10, h2_size=30)
-  npatients = 5
-  function F_(ω, i)
+"RNN model for patient `personid`"
+function model(personid; nsteps = 20, h1_size = 10, h2_size = 30)
+  function F_(ω)
     other = Chain(
-              Flux.Dense(ω[@id][i][2], h1_size, h2_size, Flux.relu),
-              Flux.Dense(ω[@id][i][3], h2_size, 1, Flux.sigmoid))
+              Flux.Dense(ω[@id][personid][2], h1_size, h2_size, Flux.relu),
+              Flux.Dense(ω[@id][personid][3], h2_size, 1, Flux.sigmoid))
     Chain(
-      Flux.Dense(ω[@id][i][1], 1 + h1_size, h1_size, Flux.relu),
+      Flux.Dense(ω[@id][personid][1], 1 + h1_size, h1_size, Flux.relu),
       h -> vcat(other(h), h))
   end
-
-  # Create one network per person
-  fs = [ciid(ω -> F_(ω,  i)) for i = 1:npatients]
-
-  # Create one simulation RandVar for each patient
-  sims = [ciid(ω -> rnn_(ω, f(ω), nsteps, h1_size)) for f in fs]
-
-  # Take average over time
-  meansims = ω -> mean.(sims(ω))
-  sims, meansims
+  ciid(F_)
 end
 
-function traces(data, i, measure = 807)
+"RandVar over nsteps of RNN simulation"
+sim(f, nsteps, h1_size) = ciid(ω -> rnn_(ω, f(ω), nsteps, h1_size))
+
+#   # Create one network per person
+#   fs = [ciid(ω -> F_(ω,  i)) for i = 1:npatients]
+
+#   # Create one simulation RandVar for each patient
+#   sims = [ciid(ω -> rnn_(ω, f(ω), nsteps, h1_size)) for f in fs]
+#   # # Take average over time
+#   # meansims = ω -> mean.(sims(ω))
+#   # sims, meansims
+# end
+
+"Averages over time"
+meansims(sims) = ciid(ω -> mean.(sims(ω)))
+
+"Data filtered to patient `personid`, on measurement `measure` sorted in time"
+function filterdata(data, personid, measure = 807)
   people = groupby(data, :Id)
-  p1 = people[i]
+  p1 = people[personid]
   p2 = filter(row -> row[:Measure] == measure, p1)
   sort(p2, :Time,)
 end
 
-"Data condition, returns (sim == peronid.data, peronid.data)"
-function datacond(data, sim, personid, nsteps)
-  exampledata = traces(data, personid)
-  range = 1:min(nsteps, nrow(exampledata))
-  obvglucose = normalize(Float64.(exampledata[:Value]))[range]
+"Retruns normalized vector of data Vector{T}"
+function timeseries(persondata, nsteps, ::Type{T} = Float64) where T 
+  range = 1:min(nsteps, nrow(persondata))
+  normalize(T.(persondata[:Value]))[range]
+end
+
+"Sequence of observed data for patient `personid`"
+observations(personid, nsteps; data = loaddata()) = timeseries(filterdata(data, personid), nsteps)
+
+datalen(personid; data = loaddata(), kwargs...) = size(filterdata(data, personid; kwargs...), 1)
+
+
+"Conditioning RandVar: sim == personid.data"
+function datacond(sim, personid, nsteps; data = loaddata())
+  # Get data for person i
+  personiddata = filterdata(data, personid)
+  obvglucose = timeseries(personiddata, nsteps)
+
+  # Return Condition
   datacond = sim[range] == obvglucose
   datacond, obvglucose
 end
@@ -68,16 +101,22 @@ end
 "Load the data"
 loaddata() = CSV.read(joinpath(DATADIR, "glucosedata.csv"))
 
-"Data, model, condition"
-function infer(nsteps = 20; n = 1000, h1 = 10)
-  y, obvglucose, sims = conditioned_model(nsteps = nsteps)
-  simsω = rand(SimpleΩ{Vector{Int}, Flux.TrackedArray}, y, HMCFAST, n = n, stepsize = 0.01)
-  # simsω = rand(SimpleΩ{Vector{Int}, Flux.TrackedArray}, y, HMCFAST, n=1000)
-  # simsω = rand(SimpleΩ{Vector{Int}, Flux.Array}, y, HMC, n=10000)
-  simsω, obvglucose, sims
+"RNN model conditioned on data from `personid`"
+function conditioned_model(personid; data = loaddata(), nsteps, h1_size, modelkwargs...)
+  f = model(personid; nsteps = nsteps, h1_size = h1_size, modelkwargs...)
+  sim_ = sim(f, nsteps, h1_size)
+  obs = observations(personid, nsteps; data = data)
+  sim ==ₛ obs
 end
 
-function infer_ties()
+"Sample posterier without ties between patients"
+function sample_posterior(personid, nsteps = 20; n = 5000, alg = Replica, algargs...)
+  m = Glucose.conditioned_model(personid; nsteps = nsteps)
+  rand(m, n; alg = alg, algargs...)
+end
+
+"Sample posterier with ties between patients"
+function sample_tied_posterior()
   data = loaddata()
   sims, simsω, (obvglucose_3, obvglucose_4) = Omega.withkernel(Omega.kseα(200)) do
     h1, h2 = 25, 25
@@ -89,66 +128,37 @@ function infer_ties()
     y_3, obvglucose_3 = datacond(data, sims[3], 3, nsteps)
     y_4, obvglucose_4 = datacond(data, sims[4], 4, 1)
     δ = 0.001
-    ties = [d(meansims[i], meansims[j]) < δ for i = 3:3, j = 1:npatients if i != j]
+    ties = [lift(dist)(meansims[i], meansims[j]) < δ for i = 3:3, j = 1:npatients if i != j]
     simsω = rand(SimpleΩ{Vector{Int}, Flux.TrackedArray}, (y_4 & y_3) & ((&)(ties...)), HMCFAST,
                   n=n, stepsize = 0.01);
     sims, simsω, (obvglucose_3, obvglucose_4)
   end
 end
 
-function conditioned_model(;personid = 3, nsteps = 20, h1 = 10, h2 = 30)
-  data = loaddata()
-  sims, meansims = model(nsteps, h1, h2)
-  y, obvglucose = datacond(data, sims[personid], personid, nsteps)
-  y, obvglucose, sims
+# Plots
+
+"Compare Data, rnn prior, rnn posterior, and predictive posterior"
+function predictionplot(personid; n = 10, alg = Replica, h1_size = 10, modelkwargs = (), algkwargs = ())
+  nsteps = datalen(personid)
+
+  f = model(personid; nsteps = nsteps, modelkwargs...)
+  priorsim = sim(f, nsteps, h1_size)
+  predsim = sim(f, nsteps * 2, h1_size)
+
+  # Simulate from Prior
+  priorsim_ = rand(priorsim)
+
+  obs = observations(personid, nsteps)
+
+  # Posterior simulations
+  postsim_, predsim_ = withkernel(kseα(10000)) do
+    rand((priorsim, predsim), priorsim ==ₛ obs, n; alg = alg, algkwargs...)[end]
+  end
+
+  plot([obs, priorsim_, postsim_, predsim_], label = ["Observation  ", "Prior", "Posterior", "Prediction"])
 end
 
-## Plots
-## ====
-"n simulations, n + 1 simulations, with mean tied"
-function plot1(sims, dpi = 80; save = false, path = joinpath(ENV["DATADIR"], "mu", "figures", "test.pdf"))
-  p = Plots.plot(sims, w=3,
-                 title = "Time vs Glucose Level",
-                 xaxis = "Time",
-                 yaxis = "Glucose Level",
-                 fmt = :pdf,
-                 size = (Int(5.5*dpi), 2*dpi),
-                 dpi = dpi)
-  save && savefig(p, path)
-  p
-end
+predictionplot(5, n = 5000)
 
-nipssize() = ()
-
-function setupplots()
-  upscale = 1 #8x upscaling in resolution
-  fntsm = Plots.font("sans-serif", 10.0*upscale)
-  fntlg = Plots.font("sans-serif", 14.0*upscale)
-  default(titlefont = fntlg, guidefont=fntlg, tickfont=fntsm, legendfont=fntsm)
-  default(size = (500*upscale, 300*upscale)) #Plot canvas size
-  default(dpi = 300) #Only for PyPlot - presently broken
-end
-
-function main(n = 1000)
-  simsω, obvglucose, sims = infer(n=n)
-  plot1([Flux.data.(sims[1](simsω[end])), obvglucose])
-end
-
-function plot_idx(idx, simsω, sim, obvglucose; plotkwargs...)
-  plot1([Flux.data.(sim(simsω[idx])), obvglucose]; plotkwargs...)
-end
-
-"Find ω with minimum distance"
-function mindistance(simsω, sim, obvglucose, norm_ = 2)
-  k = length(obvglucose)
-  ok =  [Flux.data.(sim(simω))[1:k] for simω in simsω]
-  norms = [norm(x - obvglucose, norm_) for x in ok]
-  p, id_ = findmin(norms)
-end
-
-function plot_minimum(simsω, sims, obvglucose, norm_ = 2)
-  @show p, id_ = mindistance(simsω, sims, obvglucose, norm_)
-  plot_idx(id_, simsω, sims, obvglucose)
-end
 
 end
